@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     // --- Replace these with your actual spreadsheet info ---
     const spreadsheetId = "1drWGCdEFUyWvGWiBV68SLf0dlNALSMl2j1IQozbN8oM";
-    const range = "HS/company_lists/04Jun!A1:J1000"; 
+    const range = "HS/company_lists/04Jun!A2:J1000"; 
 
     // Fetch sheet data
     const response = await sheets.spreadsheets.values.get({
