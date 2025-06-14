@@ -3,7 +3,7 @@ import { google } from "googleapis";
 import path from "path";
 import fs from "fs/promises";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const CREDENTIALS_PATH = path.join(process.cwd(), "credentials.json");
     const credentials = JSON.parse(await fs.readFile(CREDENTIALS_PATH, "utf8"));

@@ -18,7 +18,7 @@ type MarkerData = {
 };
 
 // Convert sheet rows into clean MarkerData
-function convertSheetToMarkers(sheetData: any[]): MarkerData[] {
+function convertSheetToMarkers(sheetData: Record<string, string>[]): MarkerData[] {
   return (sheetData || [])
     .map((row) => ({
       name: row["NAME"] || "Unknown",
