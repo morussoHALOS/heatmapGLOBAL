@@ -69,7 +69,7 @@ export default function MapPage() {
         className="bg-orange-500 text-white absolute bottom-5 right-2 z-[9000]"
         variant="ghost"
       >
-        Update Map
+        Update Map?
       </Button>
       <LeafletMap data={data} />
     </div>
