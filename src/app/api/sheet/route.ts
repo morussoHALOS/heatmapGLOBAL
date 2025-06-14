@@ -5,11 +5,9 @@ import fs from "fs/promises";
 
 export async function GET(req: NextRequest) {
   try {
-    // Load service account credentials
     const CREDENTIALS_PATH = path.join(process.cwd(), "credentials.json");
     const credentials = JSON.parse(await fs.readFile(CREDENTIALS_PATH, "utf8"));
 
-    // Authorize
     const auth = new google.auth.GoogleAuth({
       credentials,
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
@@ -17,11 +15,10 @@ export async function GET(req: NextRequest) {
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    // --- Replace these with your actual spreadsheet info ---
+    // --- Range starts at row 2, headers in row 2 ---
     const spreadsheetId = "1drWGCdEFUyWvGWiBV68SLf0dlNALSMl2j1IQozbN8oM";
-    const range = "HS/company_lists/04Jun!A2:J1000"; 
+    const range = "Companies!A2:L1000";
 
-    // Fetch sheet data
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range,
@@ -29,12 +26,11 @@ export async function GET(req: NextRequest) {
 
     const rows = response.data.values;
 
-    // Optional: Convert to array of objects with headers
     let data = [];
     if (rows && rows.length > 1) {
-      const headers = rows[0];
+      const headers = rows[0];        // <-- row 2: column headers
       data = rows.slice(1).map(row =>
-        Object.fromEntries(headers.map((h, i) => [h, row[i] ?? ""]))
+        Object.fromEntries(headers.map((k, l) => [k, row[l] ?? ""]))
       );
     }
 
