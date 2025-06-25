@@ -45,7 +45,7 @@ export default function LeafletMap({ data }: { data: MarkerData[] }) {
         center={[37.0902, -95.7129]} // Center of USA
         zoom={5}
         minZoom={5}
-        maxZoom={10}
+        maxZoom={12}
         scrollWheelZoom
         style={{ height: "100%", width: "100%" }}
       >
