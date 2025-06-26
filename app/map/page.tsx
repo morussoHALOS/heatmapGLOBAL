@@ -1,11 +1,11 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+import type { Map as LeafletMap } from "leaflet";
 import ArrLegend from "@/components/ArrLegend";
 
-const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
+const HeatMap = dynamic(() => import("@/components/HeatMap"), {
   ssr: false,
 });
 
@@ -34,11 +34,18 @@ export default function HomePage() {
   const [legendItems, setLegendItems] = useState<
   { label: string; color: string; accounts: number; tierSum: string }[]
   >([]);
+  const center: [number, number] = [37.0902, -95.7129];
+  const mapRef = useRef<LeafletMap | null>(null);
 
 
-  const updateMapClick = () => {
-    console.log( "Click Received" )
+  const centerOnMap = () => {
+    if (mapRef.current) {
+      mapRef.current.setView(center, mapRef.current.getZoom(), {
+        animate: true,
+      });
+    }
   };
+
 
   useEffect(() => {
     const fetchMarkers = async () => {
@@ -124,12 +131,12 @@ export default function HomePage() {
       <Button
         className="bg-orange-500 text-white absolute bottom-5 right-2 z-[9000]"
         variant="ghost"
-        onClick={updateMapClick}
+        onClick={centerOnMap}
       >
-        Update Map
+        Center
       </Button>
-
-      <LeafletMap data={data} />
+        
+      <HeatMap data={data} mapRef={mapRef} />
       <ArrLegend items={legendItems}/>
     </div>
   );

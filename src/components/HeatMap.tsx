@@ -1,14 +1,16 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  CircleMarker,
-  Popup,
-  useMap,
+import { useEffect } from "react";
+import { 
+  MapContainer, 
+  TileLayer, 
+  CircleMarker, 
+  Popup 
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import type { Map as LeafletMapType } from "leaflet";
+import { useMap } from "react-leaflet";
+import { useState } from "react";
+import type { MutableRefObject } from "react";
 
 type MarkerData = {
   name: string;
@@ -59,7 +61,13 @@ function SetupPanes() {
   return null;
 }
 
-export default function LeafletMap({ data }: { data: MarkerData[] }) {
+export default function HeatMap({
+  data,
+  mapRef,
+}: {
+  data: MarkerData[];
+  mapRef: MutableRefObject<LeafletMapType | null>;
+}) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -87,7 +95,14 @@ export default function LeafletMap({ data }: { data: MarkerData[] }) {
         maxZoom={12}
         scrollWheelZoom
         style={{ height: "100%", width: "100%" }}
+        ref={(mapInstance) => {
+          if (mapInstance) {
+            mapRef.current = mapInstance;
+          }
+        }}
       >
+
+
         <SetupPanes />
 
         <TileLayer

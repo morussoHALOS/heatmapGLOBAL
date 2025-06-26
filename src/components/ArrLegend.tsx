@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
 
 type LegendItem = {
   label: string;
@@ -28,7 +27,7 @@ export default function ArrLegend ({
   return (
     <Card className={`${position} z-[9000] p-3 w-fit shadow-md`}>
       <CardContent className="flex flex-col gap-2 p-0">
-        <div className="text-center font-semibold text-sm mb-1">{title}</div>
+        <div className="items-center font-semibold text-sm mb-1">{title}</div>
         {items.map((item) => (
           <div key={item.label} className="flex items-center gap-2 text-xs">
             <span className={`w-4 h-4 rounded-sm ${item.color}`} />
