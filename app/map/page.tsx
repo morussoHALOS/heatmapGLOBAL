@@ -9,12 +9,12 @@ const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
 });
 
 type MarkerData = {
-  name: string;
-  address: string;
   arr: number;
+  name: string;
+  phone?: string;
+  address: string;
   lat: number;
   lon: number;
-  phone?: string;
 };
 
 export default function HomePage() {
@@ -22,38 +22,53 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/sheet")
-      .then((res) => res.json())
-      .then((json) => {
+    const fetchMarkers = async () => {
+      try {
+        const res = await fetch("/api/sheet");
+        const json = await res.json();
+
         console.log("🧪 API JSON:", json);
 
-        if (json.data?.length > 0) {
-          console.log("🔍 Sample Keys:", Object.keys(json.data[0]));
-          console.log("🔍 Sample Row:", json.data[0]);
+        if (!res.ok || !json.data) {
+          console.error("❌ API returned error:", json.error || "No data");
+          return;
         }
 
-        // ✅ API already returns fully parsed data
-        const markers = json.data.filter(
-          (row: MarkerData) =>
-            typeof row.lat === "number" &&
-            !isNaN(row.lat) &&
-            typeof row.lon === "number" &&
-            !isNaN(row.lon)
-        );
+        // Temporarily disable filtering to test raw output
+        const parsedMarkers = json.data.map((row: any) => {
+        const lat = Number(row["Lat"]);
+        const lon = Number(row["Lon"]);
 
-        console.log("📍 Parsed Markers:", markers);
-        setData(markers);
+  return {
+    name: row["NAME"] || "Unknown",
+    address: row["Full Address"] || "",
+    arr: Number(row["MAXIO  LOCAL ARR AT END OF MONTH  C"]) || 0,
+    lat,
+    lon,
+    phone: row["Phone Number"] || "",
+  };
+          }).filter(
+            (row: MarkerData) =>
+              !isNaN(row.lat) &&
+              !isNaN(row.lon)
+          );
+
+
+        console.log("📍 Parsed Markers:", parsedMarkers);
+        setData(parsedMarkers);
+      } catch (err) {
+        console.error("❌ Fetch error:", err);
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("❌ Fetch failed", err);
-        setLoading(false);
-        setData([]);
-      });
+        console.log("✅ Done loading");
+      }
+    };
+
+    fetchMarkers();
   }, []);
 
   if (loading) return <div className="p-4">Loading map…</div>;
-  if (!data.length) return <div className="p-4">No map data found.</div>;
+  if (!data.length) return <div className="p-4 text-red-500">No map data found. Check console.</div>;
 
   return (
     <div className="relative w-full h-screen">
@@ -66,6 +81,7 @@ export default function HomePage() {
       <Button
         className="bg-orange-500 text-white absolute bottom-5 right-2 z-[9000]"
         variant="ghost"
+        onClick={() => window.location.reload()}
       >
         Update Map
       </Button>

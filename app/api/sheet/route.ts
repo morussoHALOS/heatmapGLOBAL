@@ -1,58 +1,58 @@
 import { google } from "googleapis";
-import { readFileSync } from "fs";
-import path from "path";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Load credentials from JSON file
-    const credsPath = path.join(process.cwd(), "credentials.json");
-    const creds = JSON.parse(readFileSync(credsPath, "utf-8"));
+    const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+    let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY;
+    const spreadsheetId = process.env.SPREADSHEET_ID;
+    const range = "Companies!A2:L"; // Customize this range
 
-    // Create JWT auth client
-    const auth = new google.auth.JWT({
-      email: creds.client_email,
-      key: creds.private_key,
+    if (!clientEmail || !privateKey || !spreadsheetId) {
+      return NextResponse.json({ error: "Missing environment variables" }, { status: 500 });
+    }
+
+    // Handle newline escape issues
+    privateKey = privateKey.replace(/\\n/g, "\n");
+
+    const jwt = new google.auth.JWT({
+      email: clientEmail,
+      key: privateKey,
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
     });
 
-    // Verify access token works (optional debug)
-    const token = await auth.getAccessToken();
-    console.log("✅ Access Token:", token);
 
-    const sheets = google.sheets({ version: "v4", auth });
-
-    // ✅ Your actual spreadsheet ID
-    const spreadsheetId = "1drWGCdEFUyWvGWiBV68SLf0dlNALSMl2j1IQozbN8oM";
-    const range = "Companies!A2:Z"; // start from row 2 to skip header if needed
-
-    const res = await sheets.spreadsheets.values.get({ spreadsheetId, range });
-
-    const [header, ...rows] = res.data.values || [];
-
-    const data = rows.map((row) => {
-      const obj: Record<string, string> = {};
-      header.forEach((col, i) => {
-        obj[col] = row[i] || "";
-      });
-      return obj;
+    const sheets = google.sheets({ version: "v4", auth: jwt });
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
     });
 
-    const markers = data
-      .map((row) => ({
-        name: row["NAME"] || "Unknown",
-        address: row["Full Address"] || "",
-        phone: row["Phone Number"] || row["PHONE"] || "",
-        arr: Number(row["MAXIO  LOCAL ARR AT END OF MONTH  C"]) || 0,
-        lat: Number(row["Lat"]),
-        lon: Number(row["Lon"]),
-      }))
-      .filter((r) => !isNaN(r.lat) && !isNaN(r.lon));
+    const values = response.data.values ?? [];
+    if (values.length === 0) {
+      return NextResponse.json({ data: [] });
+    }
 
-    return NextResponse.json({ data: markers });
-  } catch (err) {
-    console.error("❌ Error loading sheet:", err);
-    const message = err instanceof Error ? err.message : JSON.stringify(err);
-    return NextResponse.json({ error: "Failed to load sheet", details: message }, { status: 500 });
+    const [headers, ...rows] = values;
+    const structured = rows.map((row) =>
+      Object.fromEntries(headers.map((key, i) => [key, row[i] ?? ""]))
+    );
+
+    const excludedHeaders = ["HS OBJECT ID", "MAXIO  CUSTOMER STATUS  C", "PHONE", "CITY", "STATE"]
+
+    const cleaned = structured.map((row) => {
+      const filteredRow: Record<string, any> = {};
+      for ( const key in row ) {
+        if ( !excludedHeaders.includes(key) ) {
+          filteredRow[key] = row[key];
+        }
+      }
+      return filteredRow;
+    });
+
+    return NextResponse.json({ data: cleaned });
+  } catch (err: any) {
+    console.error("❌ Sheets API Error:", err.message);
+    return NextResponse.json({ error: "Failed to load sheet", details: err.message }, { status: 500 });
   }
 }
