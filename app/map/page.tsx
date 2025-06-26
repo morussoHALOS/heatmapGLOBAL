@@ -17,6 +17,15 @@ type MarkerData = {
   lon: number;
 };
 
+type RawRow = {
+  NAME: string;
+  "Full Address": string;
+  "MAXIO  LOCAL ARR AT END OF MONTH  C": string;
+  Lat: string;
+  Lon: string;
+  "Phone Number"?: string;
+};
+
 export default function HomePage() {
   const [data, setData] = useState<MarkerData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,30 +43,28 @@ export default function HomePage() {
           return;
         }
 
-        // Temporarily disable filtering to test raw output
-        const parsedMarkers = json.data.map((row: any) => {
-        const lat = Number(row["Lat"]);
-        const lon = Number(row["Lon"]);
+        const parsedMarkers = (json.data as RawRow[]).map((row) => {
+          const lat = Number(row.Lat);
+          const lon = Number(row.Lon);
 
-  return {
-    name: row["NAME"] || "Unknown",
-    address: row["Full Address"] || "",
-    arr: Number(row["MAXIO  LOCAL ARR AT END OF MONTH  C"]) || 0,
-    lat,
-    lon,
-    phone: row["Phone Number"] || "",
-  };
-          }).filter(
-            (row: MarkerData) =>
-              !isNaN(row.lat) &&
-              !isNaN(row.lon)
-          );
-
+          return {
+            name: row.NAME || "Unknown",
+            address: row["Full Address"] || "",
+            arr: Number(row["MAXIO  LOCAL ARR AT END OF MONTH  C"]) || 0,
+            lat,
+            lon,
+            phone: row["Phone Number"] || "",
+          };
+        }).filter(
+          (row: MarkerData) =>
+            !isNaN(row.lat) &&
+            !isNaN(row.lon)
+        );
 
         console.log("📍 Parsed Markers:", parsedMarkers);
         setData(parsedMarkers);
       } catch (err) {
-        console.error("❌ Fetch error:", err);
+        console.error("❌ Fetch error:", (err as Error).message);
       } finally {
         setLoading(false);
         console.log("✅ Done loading");

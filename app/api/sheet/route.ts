@@ -34,9 +34,10 @@ export async function GET() {
     }
 
     const [headers, ...rows] = values;
-    const structured = rows.map((row) =>
+    const structured: Record<string, string>[] = rows.map((row: string[]) =>
       Object.fromEntries(headers.map((key, i) => [key, row[i] ?? ""]))
     );
+
 
     const excludedHeaders = ["HS OBJECT ID", "MAXIO  CUSTOMER STATUS  C", "PHONE", "CITY", "STATE"]
 
@@ -51,8 +52,8 @@ export async function GET() {
     });
 
     return NextResponse.json({ data: cleaned });
-  } catch (err: any) {
-    console.error("❌ Sheets API Error:", err.message);
-    return NextResponse.json({ error: "Failed to load sheet", details: err.message }, { status: 500 });
+  } catch (err) {
+    const error = err as Error;
+    console.error("❌ Sheets API Error:", error.message);
   }
 }
