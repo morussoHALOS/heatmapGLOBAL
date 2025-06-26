@@ -1,15 +1,22 @@
 "use client";
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import { useEffect, useRef, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  CircleMarker,
+  Popup,
+  useMap,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
 type MarkerData = {
   name: string;
-  address: string; // from "Full Address" (column J)
-  arr: number;     // from "MAXIO  LOCAL ARR AT END OF MONTH  C" (column B)
-  lat: number;     // from column K
-  lon: number;     // from column L
-  phone?: string;  // from column D (or I)
+  address: string;
+  arr: number;
+  lat: number;
+  lon: number;
+  phone?: string;
 };
 
 function getMarkerColor(arr: number): string {
@@ -18,6 +25,38 @@ function getMarkerColor(arr: number): string {
   if (arr <= 50000) return "orange";
   if (arr <= 100000) return "red";
   return "purple";
+}
+
+function getPaneForArr(arr: number): string {
+  if (arr > 100000) return "arr-purple";
+  if (arr > 50000) return "arr-red";
+  if (arr > 25000) return "arr-orange";
+  if (arr > 10000) return "arr-yellow";
+  return "arr-green";
+}
+
+// Component to create panes once map is ready
+function SetupPanes() {
+  const map = useMap();
+
+  useEffect(() => {
+    const panes = [
+      { name: "arr-purple", zIndex: 650 },
+      { name: "arr-red", zIndex: 640 },
+      { name: "arr-orange", zIndex: 630 },
+      { name: "arr-yellow", zIndex: 620 },
+      { name: "arr-green", zIndex: 610 },
+    ];
+
+    panes.forEach(({ name, zIndex }) => {
+      if (!map.getPane(name)) {
+        map.createPane(name);
+        map.getPane(name)!.style.zIndex = zIndex.toString();
+      }
+    });
+  }, [map]);
+
+  return null;
 }
 
 export default function LeafletMap({ data }: { data: MarkerData[] }) {
@@ -42,13 +81,15 @@ export default function LeafletMap({ data }: { data: MarkerData[] }) {
   return (
     <div style={{ height: "100vh", width: "100%" }}>
       <MapContainer
-        center={[37.0902, -95.7129]} // Center of USA
+        center={[37.0902, -95.7129]}
         zoom={5}
         minZoom={5}
         maxZoom={12}
         scrollWheelZoom
         style={{ height: "100%", width: "100%" }}
       >
+        <SetupPanes />
+
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; OpenStreetMap contributors'
@@ -59,6 +100,7 @@ export default function LeafletMap({ data }: { data: MarkerData[] }) {
             key={i}
             center={[row.lat, row.lon]}
             radius={6 + Math.log1p(row.arr) * 0.5}
+            pane={getPaneForArr(row.arr)}
             pathOptions={{
               color: getMarkerColor(row.arr),
               fillColor: getMarkerColor(row.arr),
@@ -66,7 +108,7 @@ export default function LeafletMap({ data }: { data: MarkerData[] }) {
             }}
           >
             <Popup>
-              <div style={{ minWidth: 180, maxWidth: 240, padding: 8 }}>
+              <div style={{ minWidth: 120, maxWidth: 180, padding: 2 }}>
                 <div style={{ fontWeight: 600, fontSize: 16 }}>{row.name}</div>
                 <div style={{ fontSize: 13, margin: "4px 0" }}>{row.address}</div>
                 <div style={{ fontSize: 13 }}>

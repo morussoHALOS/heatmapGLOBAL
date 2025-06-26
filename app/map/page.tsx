@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+import ArrLegend from "@/components/ArrLegend";
 
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
@@ -29,6 +30,15 @@ type RawRow = {
 export default function HomePage() {
   const [data, setData] = useState<MarkerData[]>([]);
   const [loading, setLoading] = useState(true);
+  const companyCount = 100;
+  const [legendItems, setLegendItems] = useState<
+  { label: string; color: string; accounts: number; tierSum: string }[]
+  >([]);
+
+
+  const updateMapClick = () => {
+    console.log( "Click Received" )
+  };
 
   useEffect(() => {
     const fetchMarkers = async () => {
@@ -62,7 +72,30 @@ export default function HomePage() {
         );
 
         console.log("📍 Parsed Markers:", parsedMarkers);
+        // Step 1: Save parsed markers
         setData(parsedMarkers);
+
+        // Step 2: Define ARR brackets
+        const tiers = [
+          { label: "≥ $100K", color: "bg-purple-500", min: 100000, max: Infinity },
+          { label: "$50K-100K", color: "bg-red-500", min: 50000, max: 99999.99 },
+          { label: "$25K-$50K", color: "bg-orange-500", min: 25000, max: 49999.99 },
+          { label: "$10K-$25K", color: "bg-yellow-500", min: 10000, max: 24999.99 },
+          { label: "≤ $10K", color: "bg-green-500", min: 0, max: 9999.99 },
+        ];
+
+        // Step 3: Compute stats
+        const stats = tiers.map(tier => {
+          const matches = parsedMarkers.filter(c => c.arr >= tier.min && c.arr <= tier.max);
+          return {
+            label: tier.label,
+            color: tier.color,
+            accounts: matches.length,
+            tierSum: matches.reduce((acc, c) => acc + c.arr, 0).toLocaleString(),
+          };
+        });
+
+        setLegendItems(stats);
       } catch (err) {
         console.error("❌ Fetch error:", (err as Error).message);
       } finally {
@@ -80,7 +113,10 @@ export default function HomePage() {
   return (
     <div className="relative w-full h-screen">
       <div className="flex justify-center">
-        <Button className="mx-auto mt-4 z-[9000]" variant="title">
+        <Button 
+          className="mx-auto mt-3 z-[9000]" 
+          variant="title"
+        >
           HALOS Global Heatmap
         </Button>
       </div>
@@ -88,12 +124,13 @@ export default function HomePage() {
       <Button
         className="bg-orange-500 text-white absolute bottom-5 right-2 z-[9000]"
         variant="ghost"
-        onClick={() => window.location.reload()}
+        onClick={updateMapClick}
       >
         Update Map
       </Button>
 
       <LeafletMap data={data} />
+      <ArrLegend items={legendItems}/>
     </div>
   );
 }
