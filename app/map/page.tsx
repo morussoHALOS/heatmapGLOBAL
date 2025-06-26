@@ -12,31 +12,29 @@ const HeatMap = dynamic(() => import("@/components/HeatMap"), {
 type MarkerData = {
   arr: number;
   name: string;
-  phone?: string;
+  phone: string;
   address: string;
   lat: number;
   lon: number;
 };
 
 type RawRow = {
-  NAME: string;
-  "Full Address": string;
-  "MAXIO  LOCAL ARR AT END OF MONTH  C": string;
-  Lat: string;
-  Lon: string;
+  NAME?: string;
+  "Full Address"?: string;
+  "MAXIO  LOCAL ARR AT END OF MONTH  C"?: string;
+  Lat?: string;
+  Lon?: string;
   "Phone Number"?: string;
 };
 
 export default function HomePage() {
   const [data, setData] = useState<MarkerData[]>([]);
   const [loading, setLoading] = useState(true);
-  const companyCount = 100;
   const [legendItems, setLegendItems] = useState<
-  { label: string; color: string; accounts: number; tierSum: string }[]
+    { label: string; color: string; accounts: number; tierSum: string }[]
   >([]);
   const center: [number, number] = [37.0902, -95.7129];
   const mapRef = useRef<LeafletMap | null>(null);
-
 
   const centerOnMap = () => {
     if (mapRef.current) {
@@ -46,43 +44,53 @@ export default function HomePage() {
     }
   };
 
-
   useEffect(() => {
     const fetchMarkers = async () => {
       try {
         const res = await fetch("/api/sheet");
         const json = await res.json();
 
-        console.log("🧪 API JSON:", json);
-
         if (!res.ok || !json.data) {
           console.error("❌ API returned error:", json.error || "No data");
           return;
         }
 
-        const parsedMarkers = (json.data as RawRow[]).map((row) => {
-          const lat = Number(row.Lat);
-          const lon = Number(row.Lon);
+        const parsedMarkers = (json.data as RawRow[]).map((row, index) => {
+        const lat = Number(row.Lat);
+        const lon = Number(row.Lon);
+        const arrRaw = row["MAXIO  LOCAL ARR AT END OF MONTH  C"];
+        const arr = Number(arrRaw);
+        const name = row.NAME || "";
+        const address = row["Full Address"] || "";
 
-          return {
-            name: row.NAME || "Unknown",
-            address: row["Full Address"] || "",
-            arr: Number(row["MAXIO  LOCAL ARR AT END OF MONTH  C"]) || 0,
+        const phone = row["Phone Number"] || "";
+
+        if (!name || !address || isNaN(lat) || isNaN(lon) || isNaN(arr)) {
+          console.warn("❌ Skipped row", index + 3, {
+            name,
+            address,
             lat,
             lon,
-            phone: row["Phone Number"] || "",
-          };
-        }).filter(
-          (row: MarkerData) =>
-            !isNaN(row.lat) &&
-            !isNaN(row.lon)
-        );
+            arrRaw,
+          });
+          return null;
+        }
 
-        console.log("📍 Parsed Markers:", parsedMarkers);
-        // Step 1: Save parsed markers
+        return {
+          name,
+          address,
+          arr,
+          lat,
+          lon,
+          phone,
+        };
+      }).filter((row): row is MarkerData => row !== null);
+
+
+        console.log("✅ Final marker count:", parsedMarkers.length);
         setData(parsedMarkers);
 
-        // Step 2: Define ARR brackets
+        // Define ARR tiers
         const tiers = [
           { label: "≥ $100K", color: "bg-purple-500", min: 100000, max: Infinity },
           { label: "$50K-100K", color: "bg-red-500", min: 50000, max: 99999.99 },
@@ -91,9 +99,10 @@ export default function HomePage() {
           { label: "≤ $10K", color: "bg-green-500", min: 0, max: 9999.99 },
         ];
 
-        // Step 3: Compute stats
-        const stats = tiers.map(tier => {
-          const matches = parsedMarkers.filter(c => c.arr >= tier.min && c.arr <= tier.max);
+        const stats = tiers.map((tier) => {
+          const matches = parsedMarkers.filter(
+            (c) => c.arr >= tier.min && c.arr <= tier.max
+          );
           return {
             label: tier.label,
             color: tier.color,
@@ -107,7 +116,6 @@ export default function HomePage() {
         console.error("❌ Fetch error:", (err as Error).message);
       } finally {
         setLoading(false);
-        console.log("✅ Done loading");
       }
     };
 
@@ -120,10 +128,7 @@ export default function HomePage() {
   return (
     <div className="relative w-full h-screen">
       <div className="flex justify-center">
-        <Button 
-          className="mx-auto mt-3 z-[9000]" 
-          variant="title"
-        >
+        <Button className="mx-auto mt-3 z-[9000]" variant="title">
           HALOS Global Heatmap
         </Button>
       </div>
@@ -135,9 +140,9 @@ export default function HomePage() {
       >
         Center
       </Button>
-        
+
       <HeatMap data={data} mapRef={mapRef} />
-      <ArrLegend items={legendItems}/>
+      <ArrLegend items={legendItems} />
     </div>
   );
 }
