@@ -36,7 +36,7 @@ export async function GET() {
       Object.fromEntries(headers.map((key, i) => [key, row[i] ?? ""]))
     );
 
-    const excludedHeaders = ["HS OBJECT ID", "MAXIO  CUSTOMER STATUS  C", "PHONE", "CITY", "STATE"];
+    const excludedHeaders = ["MAXIO  CUSTOMER STATUS  C", "PHONE", "CITY", "ADDRESS"];
 
     const cleaned = structured.map((row) => {
       const filteredRow: Record<string, string> = {};
