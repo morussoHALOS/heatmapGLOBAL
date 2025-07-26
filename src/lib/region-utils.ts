@@ -5,20 +5,20 @@ export const REGION_MAP: Record<string, RegionKey> = {
   AK: "Carolina", WA: "Carolina", OR: "Carolina", CA: "Carolina", NV: "Carolina",
   ID: "Carolina", MT: "Carolina", WY: "Carolina", UT: "Carolina", AZ: "Carolina",
   NM: "Carolina", CO: "Carolina",  HI: "Carolina", KS: "Carolina", NE: "Carolina",
-  ND: "Carolina", SD: "Carolina", 
+  ND: "Carolina", SD: "Carolina", MI: "Carolina", WI: "Carolina", MN: "Carolina",
 
   // 🔵 Chiara
     FL: "Chiara",
    AR: "Chiara", LA: "Chiara", MS: "Chiara", GA: "Chiara",
-  AL: "Chiara",  TN: "Chiara",  SC: "Chiara", 
-  TX: "Chiara", NC: "Chiara", OK: "Chiara",
+  AL: "Chiara",    SC: "Chiara", 
+  TX: "Chiara",  OK: "Chiara",
 
   // 🟢 Arash
-  VA: "Arash", MO: "Arash", IA: "Arash", MN: "Arash", IL: "Arash",
+  VA: "Arash", MO: "Arash", IA: "Arash",  IL: "Arash",
   WV: "Arash", MD: "Arash", DE: "Arash", PA: "Arash", NJ: "Arash",
   NY: "Arash", CT: "Arash", RI: "Arash", MA: "Arash", VT: "Arash",
   NH: "Arash", ME: "Arash", DC: "Arash", KY: "Arash", IN: "Arash",
-  OH: "Arash", WI: "Arash", MI: "Arash",
+  OH: "Arash", TN: "Arash", NC: "Arash",
 
   
 };

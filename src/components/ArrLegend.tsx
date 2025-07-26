@@ -41,7 +41,16 @@ export default function ArrLegend ({
             }`}
             onClick={() => onTierClick?.(item.label)}
             >
-            <span className={`w-4 h-4 rounded-sm ${item.color}`} />
+            <span
+              className={`w-4 h-4 rounded-sm ${item.color}`}
+              style={
+                item.label === "$10K-$25K"
+                  ? { backgroundColor: "#FFEA00" }
+                  : item.label === "$25K-$50K"
+                  ? { backgroundColor: "#FFA500" }
+                  : undefined
+              }
+            />
             <span>{item.label} -- {item.accounts} accounts, ${item.tierSum.toLocaleString()}</span>
           </div>
         ))}
